@@ -29,7 +29,7 @@ def get_llm():
         model="gemini-1.5-pro-latest",
         google_api_key=api_key,
         temperature=0.4,
-        max_tokens=8000
+        max_tokens=2000
     )
 
 # Define the prompt template for job description analysis
@@ -96,76 +96,6 @@ Your response must be formatted in Markdown EXACTLY as follows:
 CRITICAL: Ensure that each bullet point is on its own separate line with a proper markdown asterisk (*) at the beginning of each line. Do NOT use the bullet character (•).
 """
 
-# Define prompt for project backstories
-project_backstory_template = """
-You are a career coach specializing in interview preparation for the {industry} industry and {domain} domain. 
-
-For the following project descriptions for a {seniority} level position at {company_name}, create detailed backstories that the candidate can use during interviews when questioned about their experience. 
-
-The backstories should:
-1. Be appropriate for the {seniority} level role
-2. Include specific challenges faced and how they were overcome
-3. Provide realistic context about stakeholders, team dynamics, and decision-making processes
-4. Include technical details that demonstrate domain expertise
-
-Here are the projects:
-{projects}
-
-For each project, provide:
-
-PROJECT BACKSTORY: [2-3 paragraphs with context, challenges, and approach. Each Paragraph not more than 120 words]
-
-KEY INTERVIEW POINTS:
-- [Point about your specific role]
-- [Point about challenges overcome]
-- [Point about collaboration/stakeholders]
-- [Point about technical decisions]
-
-POTENTIAL INTERVIEW QUESTIONS AND ANSWERS:
-1. Q: [Specific question about the project]
-   A: [Suggested answer with specific details]
-2. Q: [Specific question about challenges]
-   A: [Suggested answer with specific details]
-3. Q: [Specific question about outcomes/metrics]
-   A: [Suggested answer with specific details]
-"""
-
-# Define prompt for learning resources
-learning_resources_template = """
-You are an expert career coach and learning specialist in the {industry} industry, specifically in the {domain} domain.
-
-Based on the job description and the following projects that were created for a {seniority} level role at {company_name}, create a comprehensive learning guide for someone preparing for this role.
-
-Projects:
-{projects}
-
-Job Description:
-{job_description}
-
-Create the following sections:
-
-1. KEY TERMINOLOGY EXPLAINED:
-   - Identify 8-10 important technical terms, acronyms, or industry jargon from the projects
-   - Provide clear, concise definitions (2-3 sentences each)
-   - Focus on terms that would be unfamiliar to someone new to this domain
-
-2. CORE INTERVIEW QUESTIONS:
-   - List 5-7 technical interview questions specific to this role/domain
-   - Include 2-3 behavioral questions relevant to this role
-   - Provide brief guidance on how to approach each question (1-2 sentences)
-
-3. RECOMMENDED LEARNING RESOURCES:
-   - 3-4 specific online courses from platforms like Coursera, edX, LinkedIn Learning, or Google Skillshop (with specific course names, not just platform names)
-   - 2-3 YouTube channels or specific videos relevant to the skills needed
-
-4. INTERVIEW PREPARATION WEBSITES:
-   - List 3-5 specific websites that offer preparation resources for this role/industry
-   - Briefly explain what each site offers (1 sentence)
-   - Include any domain-specific interview preparation resources (e.g., case interview prep for consulting)
-
-Format your response with clear headings and bullet points. Be specific and practical in your recommendations. Focus on quality resources that would genuinely help someone prepare for this role.
-"""
-
 # Initialize prompt templates
 job_analysis_prompt = PromptTemplate(
     input_variables=["company_name", "job_description"],
@@ -177,22 +107,12 @@ project_generation_prompt = PromptTemplate(
     template=project_generation_template
 )
 
-project_backstory_prompt = PromptTemplate(
-    input_variables=["industry", "domain", "company_name", "projects", "seniority"],
-    template=project_backstory_template
-)
-
-learning_resources_prompt = PromptTemplate(
-    input_variables=["industry", "domain", "company_name", "projects", "job_description", "seniority"],
-    template=learning_resources_template
-)
-
 def analyze_job_description(job_description, company_name):
     llm = get_llm()
     chain = LLMChain(prompt=job_analysis_prompt, llm=llm)
     result = chain.run(job_description=job_description, company_name=company_name)
     
-    # Parse the result to extract industry, domain, and seniority
+    # Parse the result to extract industry and domain
     industry_match = re.search(r'Industry:\s*(.*?)(?:\n|$)', result)
     domain_match = re.search(r'Domain:\s*(.*?)(?:\n|$)', result)
     seniority_match = re.search(r'Seniority:\s*(.*?)(?:\n|$)', result)
@@ -215,31 +135,6 @@ def generate_projects(industry, domain, job_description, company_name, seniority
     )
     return projects
 
-def generate_backstories(industry, domain, company_name, projects, seniority):
-    llm = get_llm()
-    chain = LLMChain(prompt=project_backstory_prompt, llm=llm)
-    backstories = chain.run(
-        industry=industry,
-        domain=domain,
-        company_name=company_name,
-        projects=projects,
-        seniority=seniority
-    )
-    return backstories
-
-def generate_learning_resources(industry, domain, company_name, projects, job_description, seniority):
-    llm = get_llm()
-    chain = LLMChain(prompt=learning_resources_prompt, llm=llm)
-    resources = chain.run(
-        industry=industry,
-        domain=domain,
-        company_name=company_name,
-        projects=projects,
-        job_description=job_description,
-        seniority=seniority
-    )
-    return resources
-
 # Set the page title and configuration
 st.set_page_config(
     page_title="Resume Project Generator",
@@ -251,7 +146,7 @@ st.set_page_config(
 st.title("Resume Project Generator from Job Descriptions")
 st.markdown("""
 This tool analyzes job descriptions and generates tailored project ideas for your resume. 
-Simply paste a job description, enter the company name, and get industry-specific projects that showcase your expertise.
+Simply paste a job description, enter the company name, and get suggested industry-specific projects that showcase your expertise.
 """)
 
 # Company name input
@@ -283,19 +178,11 @@ if st.button("Generate Resume Projects") and job_description:
         industry, domain, seniority = analyze_job_description(job_description, company_name)
         
         # Generate project suggestions
-        with st.spinner(f"Generating project ideas for {industry} - {domain}..."):
+        with st.spinner(f"Generating project ideas for {industry} - {domain} - {seniority}..."):
             projects = generate_projects(industry, domain, job_description, company_name, seniority)
             
-            # Generate backstories
-            with st.spinner("Creating project backstories..."):
-                backstories = generate_backstories(industry, domain, company_name, projects, seniority)
-            
-            # Generate learning resources
-            with st.spinner("Compiling learning resources..."):
-                learning_resources = generate_learning_resources(industry, domain, company_name, projects, job_description, seniority)
-            
             # Approximate response tokens
-            response_tokens = (len(projects) + len(backstories) + len(learning_resources)) // 4
+            response_tokens = len(projects) // 4
             
             # Display results
             st.success("Analysis Complete!")
@@ -307,32 +194,11 @@ if st.button("Generate Resume Projects") and job_description:
                 st.markdown(f"**Company:** {company_name}")
                 st.markdown(f"**Industry:** {industry}")
                 st.markdown(f"**Domain:** {domain}")
-                st.markdown(f"**Seniority Level:** {seniority}")
+                st.markdown(f"**Seniority:** {seniority}")
             
             with col2:
                 st.subheader("Suggested Resume Projects")
                 st.markdown(projects)
-                
-                # Extract project titles for backstory dropdowns
-                project_titles = re.findall(r'### Project \d+: (.*?)$', projects, re.MULTILINE)
-                if not project_titles:  # Try alternative pattern if first one doesn't match
-                    project_titles = re.findall(r'### (.*?)$', projects, re.MULTILINE)
-                
-                # Split backstories by project
-                backstory_sections = backstories.split("PROJECT BACKSTORY:")[1:]  # Skip the first empty split
-                
-                if len(project_titles) == len(backstory_sections):
-                    for i, (title, backstory) in enumerate(zip(project_titles, backstory_sections)):
-                        with st.expander(f"📋 Project Backstory: {title}"):
-                            st.markdown(f"PROJECT BACKSTORY:{backstory}")
-                else:
-                    # Fallback if parsing failed
-                    with st.expander("📋 Project Backstories"):
-                        st.markdown(backstories)
-                
-                # Learning Resources Section
-                st.subheader("Learning Repository")
-                st.markdown(learning_resources)
             
             # Update token counts
             st.session_state.query_tokens += query_tokens
@@ -340,7 +206,7 @@ if st.button("Generate Resume Projects") and job_description:
             st.session_state.tokens_consumed += (query_tokens + response_tokens)
 
 # Download button for the results
-if 'projects' in locals() and 'backstories' in locals() and 'learning_resources' in locals():
+if 'projects' in locals():
     result_text = f"""
 RESUME PROJECTS FOR {company_name}
 
@@ -351,12 +217,7 @@ SENIORITY LEVEL: {seniority}
 # SUGGESTED PROJECTS
 {projects}
 
-# PROJECT BACKSTORIES
-{backstories}
-
-# LEARNING REPOSITORY
-{learning_resources}
-    """
+"""
     st.download_button(
         label="Download Results",
         data=result_text,
@@ -402,7 +263,7 @@ st.markdown(
     """
     <div style="background: linear-gradient(to right, blue, purple); padding: 15px; border-radius: 10px; text-align: center; margin-top: 20px; color: white;">
         Made with ❤️ by Anubhav Verma<br>
-        Please reach out to anubhav.verma360@gmail.com in case you encounter any issues.
+        Please reach out to anubhav.verma360@gmail.com if you encounter any issues.
     </div>
     """, 
     unsafe_allow_html=True
