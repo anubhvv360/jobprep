@@ -1,19 +1,26 @@
-# 💬 Chatbot template
+# Project-from-JD 🚀
 
-A simple Streamlit app that shows how to build a chatbot using OpenAI's GPT-3.5.
+## Generate Tailored Project Ideas from Job Descriptions
 
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://chatbot-template.streamlit.app/)
+### About the Project
+This tool analyzes job descriptions and generates **custom project ideas** for your resume.  
+Just **paste a job description**, enter the **company name**, and get **industry-specific project suggestions**.
 
-### How to run it on your own machine
+### Features
+✅ AI-powered **project suggestions** based on job descriptions  
+✅ Helps you **stand out** in job applications  
+✅ Quick and **easy-to-use**  
 
-1. Install the requirements
+### How to Use
+1. **Paste a Job Description** – Copy and paste the JD of your target job.  
+2. **Enter the Company Name** – Personalize your project suggestions.  
+3. **Get AI-Generated Project Ideas** – Showcase your expertise!  
 
-   ```
-   $ pip install -r requirements.txt
-   ```
+### Installation (For Developers)
+To run this project locally, follow these steps:
 
-2. Run the app
-
-   ```
-   $ streamlit run streamlit_app.py
-   ```
+```bash
+git clone https://github.com/anubhvv360/jobprep.git  
+cd project-from-jd  
+pip install -r requirements.txt  
+streamlit run app.py  
